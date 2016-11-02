@@ -1,6 +1,7 @@
 #include "hdc.h"
 #include "klib/khash.h"
 #include <stdio.h>
+#include <math.h>
 
 /*
  * to implement as static functions:
@@ -15,7 +16,7 @@
 */
 
 /**
- * Calculates dot product of OP1 and OP2.
+ * Calculates the dot product of OP1 and OP2.
  * @param op1  First operand
  * @param op2  Second operand
  * @param len  Length of vectors
@@ -32,11 +33,21 @@ static double dot_product(double op1[], double op2[], size_t len)
 }
 
 /**
- * Calculates entrywise product of OP1 and OP2, and places it in DEST.
- * @param dest Destination vector
- * @param op1  First operand
- * @param op2  Second operand
- * @param len  Length of vectors
+ * Calculates the norm of VEC.
+ * @param vec  Input vector
+ * @param len  Length of VEC
+ */
+static double norm(double vec[], size_t len)
+{
+    return sqrt(dot_product(vec, vec, length));
+}
+
+/**
+ * Calculates the entrywise product of OP1 and OP2, and places it in DEST.
+ * @param dest  Destination vector
+ * @param op1   First operand
+ * @param op2   Second operand
+ * @param len   Length of vectors
  */
 static void entrywise_product(double dest[], double op1[], double op2[], size_t len)
 {
