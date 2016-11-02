@@ -30,3 +30,18 @@ static double dot_product(double op1[], double op2[], size_t len)
     }
     return accum;
 }
+
+/**
+ * Calculates entrywise product of OP1 and OP2, and places it in DEST.
+ * @param dest Destination vector
+ * @param op1  First operand
+ * @param op2  Second operand
+ * @param len  Length of vectors
+ */
+static void entrywise_product(double dest[], double op1[], double op2[], size_t len)
+{
+    for (int i = 0; i < len; i++)
+    {
+        dest[i] = op1[i] * op2[i];
+    }
+}
