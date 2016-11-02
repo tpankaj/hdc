@@ -13,6 +13,7 @@
  * entrywiseProduct -> entrywise_product
  * circShift -> circ_shift
  * norm -> norm
+ * initItemMemories -> init_item_memories
 */
 
 /**
@@ -39,7 +40,7 @@ static double dot_product(double op1[], double op2[], size_t len)
  */
 static double norm(double vec[], size_t len)
 {
-    return sqrt(dot_product(vec, vec, length));
+    return sqrt(dot_product(vec, vec, len));
 }
 
 /**
