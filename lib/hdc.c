@@ -13,14 +13,13 @@
  * *dotProduct -> dot_product
  * *entrywiseProduct -> entrywise_product
  * circShift -> circ_shift
- * computeSumHV -> compute_sum_hv
  * *norm -> norm
  * initItemMemories -> init_item_memories
- * randperm -> rand_perm
- * genRandomHV -> gen_random_hv
+ * *randperm -> rand_perm
+ * *genRandomHV -> gen_random_hv
  *
  * to implement as public functions:
- * hdc_init
+ * hdc_init - make sure to do srand, init_item_memories
  * hdc_train
  * hdc_predict
  * hdc_deinit
@@ -108,6 +107,8 @@ static void rand_perm(int vec[], int len)
 
 /**
  * Generate a random vector VEC of length LEN with zero mean
+ * @param vec  Array to store random hypervector in
+ * @param len  Length of the random hypervector
  */
 static void gen_random_hv(double vec[], int len)
 {
