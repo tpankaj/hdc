@@ -15,6 +15,12 @@ struct hdc_trained_model
     int* num_pat;
 };
 
+struct hdc_accuracy
+{
+    double accuracy;
+    double acc_exc_trnz;
+};
+
 struct hdc_trained_model* hdctrain(int* label_train_set, double** train_set,
                                    int num_classes, int D, int N, int maxl,
                                    double precision, double cutting_angle);

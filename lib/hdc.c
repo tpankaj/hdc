@@ -409,3 +409,86 @@ mem_error:
     fprintf(stderr, "hdctrain: failed to allocate memory\n");
     return NULL;
 }
+
+/**
+ * Trains hyperdimensional computing model.
+ * @param model           Trained HDC model
+ * @param label_test_set  Test set labels
+ * @param test_set        Test set data
+ * @param test_set_len    Length of test set
+ * @param num_classes     Number of classes
+ * @param D               Dimension of hypervectors
+ * @param N               Size of Ngram
+ * @param precision       Precision used in quantization of input EMG signals
+ * @return Trained hyperdimensional computing model
+ */
+struct hdc_accuracy hdcpredict(struct hdc_trained_model* model,
+                               int* label_test_set, double** test_set,
+                               int test_set_len, int num_classes, int D, int N,
+                               double precision)
+{
+    int correct = 0;
+    int num_tests = 0;
+    int tranz_error = 0;
+
+    for (int i = 0; i < test_set_len - N + 1; i++)
+    {
+        num_tests++;
+        int* frequencies = calloc(num_classes, sizeof(int));
+        if (!frequencies) goto mem_error;
+        for (int j = i; j < i + N - 1; j++)
+        {
+            frequencies[label_test_set[j]]++;
+        }
+        int max_frequency = 0;
+        int actual_label = 0;
+        for (int j = 0; j < num_classes; j++)
+        {
+            if (frequencies[label_test_set[j]] > max_frequency)
+            {
+                max_frequency = frequencies[label_test_set[j]];
+                actual_label = label_test_set[j];
+            }
+        }
+        free(frequencies);
+
+        double* sig_hv = compute_sum_hv(test_set + i, i, model->item_memories,
+                                        D, N, precision);
+        double max_angle = -1;
+        int predict_label = -1;
+
+        for (int label = 1; label <= num_classes; label++)
+        {
+            double angle = cos_angle(model->am[label], sig_hv, D);
+            if (angle > max_angle)
+            {
+                max_angle = angle;
+                predict_label = label;
+            }
+        }
+        
+        free(sig_hv);
+
+        if (predict_label == actual_label)
+        {
+            correct++;
+        }
+        else if (label_test_set[i] != label_test_set[i + N - 1])
+        {
+            tranz_error++;
+        }
+    }
+
+    struct hdc_accuracy accuracies;
+    accuracies.accuracy = ((double)correct) / ((double)num_tests);
+    accuracies.acc_exc_trnz = ((double)(correct + tranz_error))
+        / ((double)num_tests);
+
+    return accuracies;
+    
+mem_error:
+    fprintf(stderr, "hdcpredict: failed to allocate memory\n");
+    struct hdc_accuracy failed_accuracy;
+    return failed_accuracy;
+}
+
