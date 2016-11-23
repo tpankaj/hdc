@@ -1,5 +1,4 @@
 #include "hdc.h"
-#include "klib/khash.h"
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -7,12 +6,6 @@
 #include <string.h>
 
 #define NUM_EMG_CHANNELS 4
-/*
- * to implement as public functions:
- * hdc_train
- * hdc_predict
- * hdc_deinit
- */
 
 /**
  * Calculates the dot product of OP1 and OP2.
@@ -374,6 +367,7 @@ struct hdc_trained_model* hdctrain(int* label_train_set, double** train_set,
     if (!model->num_pat) goto mem_error;
     model->am = malloc(num_classes * sizeof(double*));
     if (!model->am) goto mem_error;
+    model->num_classes = num_classes;
     for (int i = 0; i < num_classes; i++)
     {
         model->am[i] = calloc(D, sizeof(double));
@@ -411,12 +405,11 @@ mem_error:
 }
 
 /**
- * Trains hyperdimensional computing model.
+ * Tests hyperdimensional computing model.
  * @param model           Trained HDC model
  * @param label_test_set  Test set labels
  * @param test_set        Test set data
  * @param test_set_len    Length of test set
- * @param num_classes     Number of classes
  * @param D               Dimension of hypervectors
  * @param N               Size of Ngram
  * @param precision       Precision used in quantization of input EMG signals
@@ -424,8 +417,7 @@ mem_error:
  */
 struct hdc_accuracy hdcpredict(struct hdc_trained_model* model,
                                int* label_test_set, double** test_set,
-                               int test_set_len, int num_classes, int D, int N,
-                               double precision)
+                               int test_set_len, int D, int N, double precision)
 {
     int correct = 0;
     int num_tests = 0;
@@ -434,7 +426,7 @@ struct hdc_accuracy hdcpredict(struct hdc_trained_model* model,
     for (int i = 0; i < test_set_len - N + 1; i++)
     {
         num_tests++;
-        int* frequencies = calloc(num_classes, sizeof(int));
+        int* frequencies = calloc(model->num_classes, sizeof(int));
         if (!frequencies) goto mem_error;
         for (int j = i; j < i + N - 1; j++)
         {
@@ -442,7 +434,7 @@ struct hdc_accuracy hdcpredict(struct hdc_trained_model* model,
         }
         int max_frequency = 0;
         int actual_label = 0;
-        for (int j = 0; j < num_classes; j++)
+        for (int j = 0; j < model->num_classes; j++)
         {
             if (frequencies[label_test_set[j]] > max_frequency)
             {
@@ -457,7 +449,7 @@ struct hdc_accuracy hdcpredict(struct hdc_trained_model* model,
         double max_angle = -1;
         int predict_label = -1;
 
-        for (int label = 1; label <= num_classes; label++)
+        for (int label = 1; label <= model->num_classes; label++)
         {
             double angle = cos_angle(model->am[label], sig_hv, D);
             if (angle > max_angle)
@@ -492,3 +484,28 @@ mem_error:
     return failed_accuracy;
 }
 
+/**
+ * Frees memory allocated for HDC model
+ * @param model  Model allocated by hdctrain
+ */
+void hdcdeinit(struct hdc_trained_model* model)
+{
+    free(model->num_pat);
+    for (int i = 0; i < model->num_classes; i++)
+    {
+        free(model->am[i]);
+    }
+    free(model->am);
+    for (int i = 0; i < model->item_memories->cim_length; i++)
+    {
+        free(model->item_memories->cim[i]);
+    }
+    free(model->item_memories->cim);
+    for (int i = 0; i < model->item_memories->im_length; i++)
+    {
+        free(model->item_memories->im[i]);
+    }
+    free(model->item_memories->im);
+    free(model->item_memories);
+    free(model);
+}
