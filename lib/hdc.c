@@ -9,7 +9,7 @@
 #define NUM_EMG_CHANNELS 4
 /*
  * to implement as static functions:
- * computeNgram -> compute_ngram
+ * *computeNgram -> compute_ngram
  * *cosAngle -> cos_angle
  * computeSumHV -> compute_sum_hv
  * *lookupItemMemory -> lookup_item_memory
@@ -232,9 +232,9 @@ mem_error:
  * @return Pointer to copy of recalled vector (heap-allocated)
  */
 static double* lookup_item_memory(double** item_memory, int im_length, int raw_key,
-                               int len, int precision)
+                               int len, double precision)
 {
-    int key = (int)((int64_t)raw_key) * ((int64_t)precision);
+    int key = (int)((double)raw_key * precision);
     if (key < im_length)
     {
         double* random_hv = malloc(im_length * sizeof(double));
@@ -263,7 +263,7 @@ mem_error:
  */
 static double* compute_ngram(double** buffer,
                              struct hdc_item_memories* item_memories, int len,
-                             int n, int precision)
+                             int n, double precision)
 {
     double* record = calloc(len, sizeof(double));
     if (!record) goto mem_error;
@@ -330,5 +330,37 @@ static double* compute_ngram(double** buffer,
     
 mem_error:
     fprintf(stderr, "compute_ngram: failed to allocate memory\n");
+    return NULL;
+}
+
+/**
+ * Computes hypervector sums.
+ * @param buffer         data buffer
+ * @param buffer_length  number of entries in data buffer
+ * @param item_memories  continuous and discrete item memories
+ * @param len            length of hypervectors
+ * @param n              length of data buffer
+ * @param precision      precision used in quantization of input EMG signals
+ * @return Pointer to hypervector sum (heap-allocated)
+ */
+static double* compute_sum_hv(double** buffer, int buffer_length,
+                              struct hdc_item_memories* item_memories,
+                              int len, int n, double precision)
+{
+    double* sum_hv = calloc(len, sizeof(double));
+    if (!sum_hv) goto mem_error;
+
+    for (int i = 1; i <= buffer_length - n + 1; i++)
+    {
+        double* new_ngram = compute_ngram(buffer + i, item_memories, len, n,
+                                          precision);
+        entrywise_sum(sum_hv, sum_hv, new_ngram, len);
+        free(new_ngram);
+    }
+
+    return sum_hv;
+    
+mem_error:
+    fprintf(stderr, "compute_sum_hv: failed to allocate memory\n");
     return NULL;
 }
