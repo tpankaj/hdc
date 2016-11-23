@@ -1,6 +1,7 @@
 #include "hdc.h"
 #include "klib/khash.h"
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -14,7 +15,7 @@
  * lookupItemMemory -> lookup_item_memory
  * *dotProduct -> dot_product
  * *entrywiseProduct -> entrywise_product
- * circShift -> circ_shift
+ * *circShift -> circ_shift
  * *norm -> norm
  * *initItemMemories -> init_item_memories
  * *randperm -> rand_perm
@@ -167,6 +168,7 @@ static struct hdc_item_memories* init_item_memories(int len, double maxl)
     /* Initialize iM with 4 orthogonal hypervectors for the 4 channels */
     memories->im = malloc(NUM_EMG_CHANNELS * sizeof(double*));
     if (!memories->im) goto mem_error;
+    memories->im_length = NUM_EMG_CHANNELS;
     for (int i = 0; i < NUM_EMG_CHANNELS; i++)
     {
         memories->im[i] = malloc(len * sizeof(double));
@@ -177,6 +179,7 @@ static struct hdc_item_memories* init_item_memories(int len, double maxl)
     /* Initialize CiM */
     memories->cim = malloc((maxl + 1) * sizeof(double*));
     if (!memories->cim) goto mem_error;
+    memories->cim_length = maxl + 1;
     double* init_hv = malloc(len * sizeof(double*));
     if (!init_hv) goto mem_error;
     double* current_hv = init_hv;
@@ -202,3 +205,34 @@ mem_error:
     fprintf(stderr, "init_item_memories: failed to allocate memory\n");
     return NULL;
 }
+
+/**
+ * Recalls a vector from item memory based on inputs.
+ * @param item_memory  item memory
+ * @param im_length    length of item memory
+ * @param raw_key      the input key
+ * @param len          length of hypervectors
+ * @param precision    precision used in quantization of input EMG signals
+ * @return Pointer to copy of recalled vector (heap-allocated)
+ */
+static double* lookup_item_memory(double** item_memory, int im_length, int raw_key,
+                               int len, int precision)
+{
+    int key = (int)((int64_t)raw_key) * ((int64_t)precision);
+    if (key < im_length)
+    {
+        double* random_hv = malloc(im_length * sizeof(double));
+        if (!random_hv) goto mem_error;
+        memcpy(random_hv, item_memory[key], len);
+        return random_hv;
+    }
+    else
+    {
+        fprintf(stderr, "lookup_item_memory: cannot find key: %d\n", key);
+        return NULL;
+    }
+mem_error:
+    fprintf(stderr, "lookup_item_memory: failed to allocate memory\n");
+    return NULL;
+}
+
