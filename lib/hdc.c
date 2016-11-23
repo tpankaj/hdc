@@ -16,7 +16,7 @@
  * *entrywiseProduct -> entrywise_product
  * circShift -> circ_shift
  * *norm -> norm
- * initItemMemories -> init_item_memories
+ * *initItemMemories -> init_item_memories
  * *randperm -> rand_perm
  * *genRandomHV -> gen_random_hv
  *
@@ -83,6 +83,18 @@ static double cos_angle(double op1[], double op2[], size_t len)
 }
 
 /**
+ * Circularly shift VEC.
+ * @param vec  Vector to shift
+ * @param len  Length of vector
+ */
+static void circ_shift(double vec[], int len)
+{
+    double last = vec[len - 1];
+    memcpy(vec, vec + 1, len - 1);
+    vec[0] = last;
+}
+
+/**
  * Generates a random permutation of the integers from 1 to LEN inclusive.
  * @param vec  Array to store random permutation in
  * @param len  Length of the random permutation
@@ -108,7 +120,7 @@ static void rand_perm(int vec[], int len)
 }
 
 /**
- * Generate a random vector VEC of length LEN with zero mean
+ * Generate a random vector VEC of length LEN with zero mean.
  * @param vec  Array to store random hypervector in
  * @param len  Length of the random hypervector
  */
@@ -138,7 +150,7 @@ static void gen_random_hv(double vec[], int len)
 }
 
 /**
- * Initialize item memories of length LEN and max EMG amplitude MAXL
+ * Initialize item memories of length LEN and max EMG amplitude MAXL.
  * @param len   Length off item memory hypervectors
  * @param maxl  Maximum amplitude of EMG signal
  * @return Initialized CiM and iM
