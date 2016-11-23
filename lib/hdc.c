@@ -11,7 +11,7 @@
  * to implement as static functions:
  * *computeNgram -> compute_ngram
  * *cosAngle -> cos_angle
- * computeSumHV -> compute_sum_hv
+ * *computeSumHV -> compute_sum_hv
  * *lookupItemMemory -> lookup_item_memory
  * *dotProduct -> dot_product
  * *entrywiseProduct -> entrywise_product
@@ -339,7 +339,7 @@ mem_error:
  * @param buffer_length  number of entries in data buffer
  * @param item_memories  continuous and discrete item memories
  * @param len            length of hypervectors
- * @param n              length of data buffer
+ * @param n              size of Ngram
  * @param precision      precision used in quantization of input EMG signals
  * @return Pointer to hypervector sum (heap-allocated)
  */
@@ -362,5 +362,61 @@ static double* compute_sum_hv(double** buffer, int buffer_length,
     
 mem_error:
     fprintf(stderr, "compute_sum_hv: failed to allocate memory\n");
+    return NULL;
+}
+
+/**
+ * Trains hyperdimensional computing model.
+ * @param label_train_set  Training set labels
+ * @param train_set        Training set data
+ * @param num_classes      Number of classes
+ * @param D                Dimension of hypervectors
+ * @param N                Size of Ngram
+ * @param maxl             Maximum amplitude of EMG signal
+ * @param precision        Precision used in quantization of input EMG signals
+ * @param cutting_angle    Threshold angle for not including a vector
+ * @return Trained hyperdimensional computing model
+ */
+struct hdc_trained_model* hdctrain(int* label_train_set, double** train_set, int num_classes, int D, int N, int maxl, double precision, double cutting_angle)
+{
+    /* Initialize trained model */
+    struct hdc_trained_model* model = malloc(sizeof(struct hdc_trained_model));
+    if (!model) goto mem_error;
+    model->item_memories = init_item_memories(D, maxl);
+    model->num_pat = calloc(num_classes, sizeof(int));
+    if (!model->num_pat) goto mem_error;
+    model->am = malloc(num_classes * sizeof(double*));
+    if (!model->am) goto mem_error;
+    for (int i = 0; i < num_classes; i++)
+    {
+        model->am[i] = calloc(D, sizeof(double));
+    }
+
+    /* Train model */
+    int i = 1;
+    while (i < num_classes - N + 1)
+    {
+        if (label_train_set[i] == label_train_set[i + N - 1])
+        {
+            double* ngram = compute_ngram(train_set + i, model->item_memories, D, N, precision);
+            double angle = cos_angle(ngram, model->am[label_train_set[i + N - 1]], D
+                );
+            if (angle < cutting_angle)
+            {
+                entrywise_sum(model->am[label_train_set[i + N - 1]], model->am[label_train_set[i + N - 1]], ngram, D);
+                model->num_pat[label_train_set[i + N - 1]]++;
+            }
+            i++;
+        }
+        else
+        {
+            i += N - 1;
+        }
+    }
+
+    return model;
+
+mem_error:
+    fprintf(stderr, "hdctrain: failed to allocate memory\n");
     return NULL;
 }
