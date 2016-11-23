@@ -8,25 +8,10 @@
 
 #define NUM_EMG_CHANNELS 4
 /*
- * to implement as static functions:
- * *computeNgram -> compute_ngram
- * *cosAngle -> cos_angle
- * *computeSumHV -> compute_sum_hv
- * *lookupItemMemory -> lookup_item_memory
- * *dotProduct -> dot_product
- * *entrywiseProduct -> entrywise_product
- * *entrywiseSum -> entrywise_sum
- * *circShift -> circ_shift
- * *norm -> norm
- * *initItemMemories -> init_item_memories
- * *randperm -> rand_perm
- * *genRandomHV -> gen_random_hv
- *
  * to implement as public functions:
- * MAYBE NOT NEEDED hdc_init - make sure to do srand, init_item_memories
  * hdc_train
  * hdc_predict
- * MAYBE NOT NEEDED hdc_deinit
+ * hdc_deinit
  */
 
 /**
@@ -377,7 +362,9 @@ mem_error:
  * @param cutting_angle    Threshold angle for not including a vector
  * @return Trained hyperdimensional computing model
  */
-struct hdc_trained_model* hdctrain(int* label_train_set, double** train_set, int num_classes, int D, int N, int maxl, double precision, double cutting_angle)
+struct hdc_trained_model* hdctrain(int* label_train_set, double** train_set,
+                                   int num_classes, int D, int N, int maxl,
+                                   double precision, double cutting_angle)
 {
     /* Initialize trained model */
     struct hdc_trained_model* model = malloc(sizeof(struct hdc_trained_model));
@@ -398,12 +385,14 @@ struct hdc_trained_model* hdctrain(int* label_train_set, double** train_set, int
     {
         if (label_train_set[i] == label_train_set[i + N - 1])
         {
-            double* ngram = compute_ngram(train_set + i, model->item_memories, D, N, precision);
-            double angle = cos_angle(ngram, model->am[label_train_set[i + N - 1]], D
-                );
+            double* ngram = compute_ngram(train_set + i, model->item_memories,
+                                          D, N, precision);
+            double angle = cos_angle(ngram,
+                                     model->am[label_train_set[i + N - 1]], D);
             if (angle < cutting_angle)
             {
-                entrywise_sum(model->am[label_train_set[i + N - 1]], model->am[label_train_set[i + N - 1]], ngram, D);
+                entrywise_sum(model->am[label_train_set[i + N - 1]],
+                              model->am[label_train_set[i + N - 1]], ngram, D);
                 model->num_pat[label_train_set[i + N - 1]]++;
             }
             i++;

@@ -14,3 +14,7 @@ struct hdc_trained_model
     double** am;
     int* num_pat;
 };
+
+struct hdc_trained_model* hdctrain(int* label_train_set, double** train_set,
+                                   int num_classes, int D, int N, int maxl,
+                                   double precision, double cutting_angle);
