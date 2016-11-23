@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
+#define NUM_EMG_CHANNELS 4
 /*
  * to implement as static functions:
  * computeNgram -> compute_ngram
@@ -118,7 +120,7 @@ static void gen_random_hv(double vec[], int len)
         return;
     }
     int *randomIndices = malloc(len * sizeof(int));
-    if (randomIndices == NULL)
+    if (!randomIndices)
     {
         fprintf(stderr, "gen_random_hv: failed to allocate memory\n");
         return;
@@ -133,4 +135,58 @@ static void gen_random_hv(double vec[], int len)
         vec[randomIndices[i]] = -1;
     }
     free(randomIndices);
+}
+
+/**
+ * Initialize item memories of length LEN and max EMG amplitude MAXL
+ * @param len   Length off item memory hypervectors
+ * @param maxl  Maximum amplitude of EMG signal
+ * @return Initialized CiM and iM
+ */
+static struct hdc_item_memories* init_item_memories(int len, double maxl)
+{
+    srand(1); /* Seed random number generator for predictable output */
+
+    /* Allocate space for item memories */
+    struct hdc_item_memories* memories =
+        malloc(sizeof(struct hdc_item_memories));
+    if (!memories) goto mem_error;
+    
+    /* Initialize iM with 4 orthogonal hypervectors for the 4 channels */
+    memories->im = malloc(NUM_EMG_CHANNELS * sizeof(double*));
+    if (!memories->im) goto mem_error;
+    for (int i = 0; i < NUM_EMG_CHANNELS; i++)
+    {
+        memories->im[i] = malloc(len * sizeof(double));
+        if (!memories->im[i]) goto mem_error;
+        gen_random_hv(memories->im[i], len);
+    }
+
+    /* Initialize CiM */
+    memories->cim = malloc((maxl + 1) * sizeof(double*));
+    if (!memories->cim) goto mem_error;
+    double* init_hv = malloc(len * sizeof(double*));
+    if (!init_hv) goto mem_error;
+    double* current_hv = init_hv;
+    int* random_indices = malloc(len * sizeof(int*));
+    if (!random_indices) goto mem_error;
+    rand_perm(random_indices, len);
+    for (int i = 0; i <= maxl; i++)
+    {
+        memories->cim[i] = malloc(len * sizeof(double*));
+        memcpy(memories->cim[i], current_hv, len);
+        int sp = (int)floor(len / 2 / maxl);
+        int start_index = (i * sp) + 1;
+        int end_index = ((i + 1) * sp) + 1;
+        for (int j = start_index; j <= end_index; j++)
+        {
+            current_hv[j] *= -1;
+        }
+    }
+
+    return memories;
+    
+mem_error:
+    fprintf(stderr, "init_item_memories: failed to allocate memory\n");
+    return NULL;
 }
