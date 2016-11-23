@@ -12,9 +12,10 @@
  * computeNgram -> compute_ngram
  * *cosAngle -> cos_angle
  * computeSumHV -> compute_sum_hv
- * lookupItemMemory -> lookup_item_memory
+ * *lookupItemMemory -> lookup_item_memory
  * *dotProduct -> dot_product
  * *entrywiseProduct -> entrywise_product
+ * *entrywiseSum -> entrywise_sum
  * *circShift -> circ_shift
  * *norm -> norm
  * *initItemMemories -> init_item_memories
@@ -22,10 +23,10 @@
  * *genRandomHV -> gen_random_hv
  *
  * to implement as public functions:
- * hdc_init - make sure to do srand, init_item_memories
+ * MAYBE NOT NEEDED hdc_init - make sure to do srand, init_item_memories
  * hdc_train
  * hdc_predict
- * hdc_deinit
+ * MAYBE NOT NEEDED hdc_deinit
  */
 
 /**
@@ -68,6 +69,21 @@ static void entrywise_product(double dest[], double op1[], double op2[], size_t 
     for (int i = 0; i < len; i++)
     {
         dest[i] = op1[i] * op2[i];
+    }
+}
+
+/**
+ * Calculates the entrywise sum of OP1 and OP2, and places it in DEST.
+ * @param dest  Destination vector
+ * @param op1   First operand
+ * @param op2   Second operand
+ * @param len   Length of vectors
+ */
+static void entrywise_sum(double dest[], double op1[], double op2[], size_t len)
+{
+    for (int i = 0; i < len; i++)
+    {
+        dest[i] = op1[i] + op2[i];
     }
 }
 
@@ -236,3 +252,83 @@ mem_error:
     return NULL;
 }
 
+/**
+ * Computes Ngrams.
+ * @param buffer         data buffer
+ * @param item_memories  continuous and discrete item memories
+ * @param len            length of hypervectors
+ * @param n              length of data buffer
+ * @param precision      precision used in quantization of input EMG signals
+ * @return Pointer to ngram (heap-allocated)
+ */
+static double* compute_ngram(double** buffer,
+                             struct hdc_item_memories* item_memories, int len,
+                             int n, int precision)
+{
+    double* record = calloc(len, sizeof(double));
+    if (!record) goto mem_error;
+    double* ngram = calloc(len, sizeof(double));
+    if (!ngram) goto mem_error;
+
+    double* ch_1_hv = lookup_item_memory(item_memories->cim,
+                                         item_memories->cim_length,
+                                         buffer[1][1], len, precision);
+    double* ch_2_hv = lookup_item_memory(item_memories->cim,
+                                         item_memories->cim_length,
+                                         buffer[1][2], len, precision);
+    double* ch_3_hv = lookup_item_memory(item_memories->cim,
+                                         item_memories->cim_length,
+                                         buffer[1][3], len, precision);
+    double* ch_4_hv = lookup_item_memory(item_memories->cim,
+                                         item_memories->cim_length,
+                                         buffer[1][4], len, precision);
+    entrywise_product(ch_1_hv, ch_1_hv, item_memories->im[1], len);
+    entrywise_product(ch_2_hv, ch_2_hv, item_memories->im[2], len);
+    entrywise_product(ch_3_hv, ch_3_hv, item_memories->im[3], len);
+    entrywise_product(ch_4_hv, ch_4_hv, item_memories->im[4], len);
+    entrywise_sum(ngram, ngram, ch_1_hv, len);
+    entrywise_sum(ngram, ngram, ch_2_hv, len);
+    entrywise_sum(ngram, ngram, ch_3_hv, len);
+    entrywise_sum(ngram, ngram, ch_4_hv, len);
+    free(ch_1_hv);
+    free(ch_2_hv);
+    free(ch_3_hv);
+    free(ch_4_hv);
+
+    for (int i = 2; i <= n; i++)
+    {
+        ch_1_hv = lookup_item_memory(item_memories->cim,
+                                     item_memories->cim_length,
+                                     buffer[i][1], len, precision);
+        ch_2_hv = lookup_item_memory(item_memories->cim,
+                                     item_memories->cim_length,
+                                     buffer[i][2], len, precision);
+        ch_3_hv = lookup_item_memory(item_memories->cim,
+                                     item_memories->cim_length,
+                                     buffer[i][3], len, precision);
+        ch_4_hv = lookup_item_memory(item_memories->cim,
+                                     item_memories->cim_length,
+                                     buffer[i][4], len, precision);
+        entrywise_product(ch_1_hv, ch_1_hv, item_memories->im[1], len);
+        entrywise_product(ch_2_hv, ch_2_hv, item_memories->im[2], len);
+        entrywise_product(ch_3_hv, ch_3_hv, item_memories->im[3], len);
+        entrywise_product(ch_4_hv, ch_4_hv, item_memories->im[4], len);
+        entrywise_sum(record, record, ch_1_hv, len);
+        entrywise_sum(record, record, ch_2_hv, len);
+        entrywise_sum(record, record, ch_3_hv, len);
+        entrywise_sum(record, record, ch_4_hv, len);
+        free(ch_1_hv);
+        free(ch_2_hv);
+        free(ch_3_hv);
+        free(ch_4_hv);
+
+        circ_shift(ngram, len);
+        entrywise_product(ngram, ngram, record, len);
+    }
+
+    return ngram;
+    
+mem_error:
+    fprintf(stderr, "compute_ngram: failed to allocate memory\n");
+    return NULL;
+}
