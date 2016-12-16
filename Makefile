@@ -6,7 +6,7 @@ build:
 	mkdir -p build && cd build && cmake .. && make
 
 test: build
-	cd build/test && ctest
+	cd build/test && CTEST_OUTPUT_ON_FAILURE=TRUE ctest
 
 init:
 	git submodule update --init --recursive

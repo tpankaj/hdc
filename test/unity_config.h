@@ -125,9 +125,9 @@ extern "C"
   * the include and exclude options here. You may include neither, either, or
   * both, as suits your needs.
   */
-/* #define UNITY_INCLUDE_FLOAT  */
+#define UNITY_INCLUDE_FLOAT
 /* #define UNITY_EXCLUDE_FLOAT  */
-/* #define UNITY_INCLUDE_DOUBLE */
+#define UNITY_INCLUDE_DOUBLE
 /* #define UNITY_EXCLUDE_DOUBLE */
 
 /* For features that are enabled, the following floating point options also
@@ -147,8 +147,8 @@ extern "C"
  * that this feature requires the use of `sprintf` so might not be desirable in
  * all cases.
  */
-/* #define UNITY_FLOAT_VERBOSE  */
-/* #define UNITY_DOUBLE_VERBOSE */
+#define UNITY_FLOAT_VERBOSE
+#define UNITY_DOUBLE_VERBOSE
 
 /* If enabled, Unity assumes you want your `FLOAT` asserts to compare standard C
  * floats. If your compiler supports a specialty floating point type, you can
