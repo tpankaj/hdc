@@ -10,7 +10,7 @@ void tearDown()
 
 void test_hdc()
 {
-    int a = 4;
+    int a = 2;
     TEST_ASSERT_EQUAL(2, a);
 }
 

@@ -6,10 +6,5 @@ addons:
     packages:
       - cmake
       - cmake-data
-      - gcc-5
-matrix:
-    include:
-    - compiler: gcc
-      env: COMPILER=gcc-5
 script:
     make test
