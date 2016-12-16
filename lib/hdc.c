@@ -85,7 +85,7 @@ static double cos_angle(double op1[], double op2[], size_t len)
 static void circ_shift(double vec[], int len)
 {
     double last = vec[len - 1];
-    memcpy(vec, vec + 1, len - 1);
+    memmove(vec + 1, vec, sizeof(double) * (len - 1));
     vec[0] = last;
 }
 
