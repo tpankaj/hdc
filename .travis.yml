@@ -1,7 +1,6 @@
-install: true
-script:
-    make test
 addons:
   apt:
     packages:
     - cmake
+script:
+    make init test
